@@ -114,14 +114,18 @@ var listener = {
     }
   },
 
-  setHash: function (s) {
+  setHash: function (s, options) {
     // Mozilla always adds an entry to the history
     if (this.mode === 'legacy') {
       this.writeFrame(s);
     }
 
     if (this.history === true) {
-      window.history.pushState({}, document.title, s);
+      if (options.replace) {
+        window.history.replaceState({}, document.title, s);
+      } else {
+        window.history.pushState({}, document.title, s);
+      }
       // Fire an onpopstate event manually since pushing does not obviously
       // trigger the pop event.
       this.fire();
@@ -217,7 +221,7 @@ Router.prototype.explode = function () {
   return v.slice(1, v.length).split("/");
 };
 
-Router.prototype.setRoute = function (i, v, val) {
+Router.prototype.getUrl = function (i, v, val) {
   var url = this.explode();
 
   if (typeof i === 'number' && typeof v === 'string') {
@@ -229,8 +233,20 @@ Router.prototype.setRoute = function (i, v, val) {
   else {
     url = [i];
   }
+  return url;
+};
 
-  listener.setHash(url.join('/'));
+Router.prototype.setRoute = function (i, v, val) {
+  var url = this.getUrl(i, v, val);
+
+  listener.setHash(url.join('/'), {replace: false});
+  return url;
+};
+
+Router.prototype.replaceRoute = function (i, v, val) {
+  var url = this.getUrl(i, v, val);
+
+  listener.setHash(url.join('/'), {replace: true});
   return url;
 };
 
